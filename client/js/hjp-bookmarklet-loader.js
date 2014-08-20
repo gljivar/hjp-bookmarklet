@@ -5,7 +5,7 @@
 	}
 	window.hjpBookmarklet = {
 		version: '1.0',
-		baseUrl: 'http://hjp-bookmarklet.listup.co/'
+		baseUrl: 'http://sjp-bookmarklet.listup.co/'
 	};
 	
 	var loadCounter = 0,
@@ -77,7 +77,7 @@
 			window.jQuery.ui = oldJQueryUi;
 		}
 		
-		insertScript(hjpBookmarklet.baseUrl+'js/hjp-bookmarklet.min.js');
+		insertScript(hjpBookmarklet.baseUrl+'js/hjp-bookmarklet.js');
 	}
 	
 	//init load icon
