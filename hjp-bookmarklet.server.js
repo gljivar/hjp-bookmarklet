@@ -1,6 +1,7 @@
 var cheerio = require('cheerio'),
 	url = require('url'),
 	request = require('request'),
+    iconv  = require('iconv-lite'),   
 	qs = require('querystring'),
 	fs = require('fs'),
 	http = require('http');
@@ -10,6 +11,7 @@ var cacheFilename = __dirname+'/'+'cache.json',
 	cacheContent;
 
 var renderResponse = function (data, jsonpCallback) {
+console.log(data);
 	if (jsonpCallback!==undefined) { //jsonp
 		return jsonpCallback+'('+JSON.stringify(data)+');';
 	} else {
@@ -18,28 +20,24 @@ var renderResponse = function (data, jsonpCallback) {
 };
 
 //gets in format: [{definition: definition, id: id}]
-var handleResponse = function (document, word, jsonpCallback, response) {
-	var $ = cheerio.load(document),
-		idAttribute = 'id',
-		$definition = $('#definicija_frame'),
-		href,
+var handleResponse = function (document, word, jsonpCallback, response) {	
+	var utf8String = iconv.decode(new Buffer(document), "ISO-8859-2");
+	var $ = cheerio.load(utf8String),
+		$h1s = $('h1'),
+                $allResults = $('p[style="margin-top: .5em; font-size: medium; max-width: 30em; "]'),
 		params = {},
-		$natLinks = $('.natuknica .natlink'),
 		definitions = [],
-		$tds,
 		results = [];
 	
-	if ($definition.length !== 0) {
+	if ($h1s.length !== 0) {
 		console.log('single found');
+	        
+                  $allResults.each(function () {
+                    console.log(this.html());
+                    definitions.push(this.html().trim());                  
+                  });
 		
-		//get id
-		href = $('.natuknica a').eq(0).attr('href');
-		if (href !== undefined) {
-			href = url.parse(href);
-			params = qs.decode(href.query);
-		}
-		
-		$tds = $definition.find('table');
+                /*$tds = $definition.find('table');
 		if ($tds.length === 1) { //multiple definitions
 			$tds.find('tr').each(function () {
 				definitions.push(this.find('td').eq(1).html().trim());
@@ -48,14 +46,14 @@ var handleResponse = function (document, word, jsonpCallback, response) {
 			$definition.find('br').eq(0).remove();
 			definitions.push($definition.html().trim());
 		}
-		
+	*/	
 		//save
 		results.push({
-			'word': $('#natuknica_raster_frame b').html().trim(),
+			'word': $($h1s[0]).html(),
 			'definition': definitions,
-			'id': params[idAttribute]
-		});
-	} else if ($natLinks.length !== 0) {
+			'id': word 
+		}); 
+	} /* else if ($natLinks.length !== 0) {
 		console.log('ambigious found');
 		
 		$natLinks.each(function () {
@@ -81,7 +79,7 @@ var handleResponse = function (document, word, jsonpCallback, response) {
 				'id': params[idAttribute]
 			});
 		});
-	} else {
+	} */ else {
 		console.log('not found');
 	}
 	
@@ -89,12 +87,12 @@ var handleResponse = function (document, word, jsonpCallback, response) {
 	cacheContent = (cacheContent !== undefined)?cacheContent:{};
 	cacheContent[word] = results;
 	
-	fs.writeFile(cacheFilename, JSON.stringify(cacheContent), function (error) {
+	/*fs.writeFile(cacheFilename, JSON.stringify(cacheContent), function (error) {
 		if (error) {
 			console.error('Could not write to cache file:', cacheFilename);
 			//ignore
 		}
-	});
+	});*/
 	
 	if (results.length !== 0 ) {
 		console.log('results from', 'service');
@@ -108,20 +106,14 @@ var handleResponse = function (document, word, jsonpCallback, response) {
 };
 
 var searchByWord = function (word, jsonpCallback, response) {
-	var serviceUrl = 'http://hjp.novi-liber.hr/index.php?show=search',
-		queryParams = {
-			'word': word,
-			'search': undefined,
-			'definicija': 'on',
-			'postano': 'true'
-	};
+	var serviceUrl = 'http://sjp.pl/' + word;
 	
 	request.post({
 		headers: {
 			'Content-Type': 'application/x-www-form-urlencoded'
 		},
 		url: serviceUrl,
-		body: qs.stringify(queryParams)
+		encoding: null
 	}, function(error, serviceResponse, body) {
 		if(!error && serviceResponse.statusCode == 200){
 			handleResponse.call(this, body, word, jsonpCallback, response);
