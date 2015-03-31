@@ -18,8 +18,8 @@
 						wordsCache[word] = json['results'];
 						displayResult.call(this, word, wordsCache[word], position);
 					},
-					encoding:"UTF-8",
-					contentType: "text/plain; charset=UTF-8",
+					//encoding:"UTF-8",
+					//contentType: "text/plain; charset=UTF-8",
 					dataType: 'jsonp'
 				});
 			} else {

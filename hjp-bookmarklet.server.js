@@ -174,6 +174,11 @@ http.createServer(function (request, response) {
 		response.setHeader("Content-Type", "application/json");
 	}
 	
+	response.setHeader("Access-Control-Allow-Origin", "*");
+	response.setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS, HEAD");
+	response.setHeader("Access-Control-Allow-Headers", "X-Requested-With");
+	response.setHeader("Access-Control-Max-Age", 1728000);
+	
 	if (params[wordAttribute] === undefined) {
 		response.statusCode = 400;
 		response.end('{"error": "Parameter \''+wordAttribute+'\' is required."}');
